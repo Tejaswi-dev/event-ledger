@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface TransactionRepository extends JpaRepository<Transaction, String> {
 
-    List<Transaction> findByAccountIdOrderByEventTimestampAsc(String accountId);
+    List<Transaction> findByAccountIdOrderByEventTimestampDesc(String accountId);
 
     @Query("SELECT COALESCE(SUM(CASE WHEN t.type = 'CREDIT' THEN t.amount ELSE -t.amount END), 0) " +
            "FROM Transaction t WHERE t.accountId = :accountId")
