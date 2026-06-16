@@ -1,5 +1,7 @@
 package com.eventledger.gateway.service;
 
+import com.eventledger.gateway.client.AccountServiceClient;
+import com.eventledger.gateway.client.AccountTransactionResult;
 import com.eventledger.gateway.dto.EventRequest;
 import com.eventledger.gateway.dto.EventResponse;
 import com.eventledger.gateway.entity.Event;
@@ -8,39 +10,33 @@ import com.eventledger.gateway.repository.EventRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class EventService {
 
-    private static final Logger log = LoggerFactory.getLogger(EventService.class);
-
     private final EventRepository eventRepository;
+    private final AccountServiceClient accountServiceClient;
     private final ObjectMapper objectMapper;
 
-    public EventService(EventRepository eventRepository, ObjectMapper objectMapper) {
+    public EventService(EventRepository eventRepository, AccountServiceClient accountServiceClient,
+                         ObjectMapper objectMapper) {
         this.eventRepository = eventRepository;
+        this.accountServiceClient = accountServiceClient;
         this.objectMapper = objectMapper;
     }
 
     public EventResult submitEvent(EventRequest request) {
-        Optional<Event> existing = eventRepository.findById(request.getEventId());
-        if (existing.isPresent()) {
-            Event event = existing.get();
-            boolean samePayload = event.getAccountId().equals(request.getAccountId())
-                    && event.getType().equals(request.getType())
-                    && event.getAmount().compareTo(request.getAmount()) == 0;
-            if (!samePayload) {
-                log.warn("Duplicate eventId {} received with different payload; returning original", request.getEventId());
-            }
+        AccountTransactionResult txResult = accountServiceClient.applyTransaction(request);
+
+        if (!txResult.isCreated()) {
+            Event event = eventRepository.findById(request.getEventId())
+                    .orElseThrow(() -> new EventNotFoundException(request.getEventId()));
             return new EventResult(toResponse(event), false);
         }
 
