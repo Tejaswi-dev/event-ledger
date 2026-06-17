@@ -23,6 +23,11 @@ management:
   endpoint:
     health:
       show-details: always
+  tracing:
+    sampling:
+      probability: 1.0
+    propagation:
+      type: W3C
 
 account-service:
   base-url: http://localhost:8081
