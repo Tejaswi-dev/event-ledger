@@ -28,8 +28,6 @@ POST /events arrives
 
 Account Service is the source of truth for "has this transaction already happened" because it's the side with the actual side effect (the balance). The Gateway's local table exists so `GET /events/{id}` and `GET /events?account=` keep working even when Account Service is down — it's a queryable journal, not the idempotency authority.
 
-**Known limitation**: if Account Service applies a transaction but crashes (or the response is lost) before the Gateway gets a reply, the Gateway returns 503 even though the transaction was actually applied. A client retry is safe (idempotent on Account Service's side), but the Gateway's local record of that event won't exist until the retry succeeds. Fixing this properly would mean an Outbox pattern — out of scope here.
-
 ## API
 
 ### Event Gateway (`:8080`)
