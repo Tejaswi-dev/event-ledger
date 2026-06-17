@@ -22,8 +22,8 @@ public class AccountServiceClient {
         this.restClient = accountServiceRestClient;
     }
 
-    @CircuitBreaker(name = "accountService", fallbackMethod = "applyTransactionFallback")
-    @Retry(name = "accountService")
+    @CircuitBreaker(name = "accountService")
+    @Retry(name = "accountService", fallbackMethod = "applyTransactionFallback")
     public AccountTransactionResult applyTransaction(EventRequest request) {
         ApplyTransactionRequest body = new ApplyTransactionRequest(
                 request.getEventId(), request.getType(), request.getAmount(), request.getEventTimestamp());
