@@ -10,6 +10,7 @@ import com.eventledger.gateway.repository.EventRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -23,16 +24,19 @@ public class EventService {
     private final EventRepository eventRepository;
     private final AccountServiceClient accountServiceClient;
     private final ObjectMapper objectMapper;
+    private final MeterRegistry meterRegistry;
 
     public EventService(EventRepository eventRepository, AccountServiceClient accountServiceClient,
-                         ObjectMapper objectMapper) {
+                         ObjectMapper objectMapper, MeterRegistry meterRegistry) {
         this.eventRepository = eventRepository;
         this.accountServiceClient = accountServiceClient;
         this.objectMapper = objectMapper;
+        this.meterRegistry = meterRegistry;
     }
 
     public EventResult submitEvent(EventRequest request) {
         AccountTransactionResult txResult = accountServiceClient.applyTransaction(request);
+        meterRegistry.counter("events.submitted.total").increment();
 
         if (!txResult.isCreated()) {
             Event event = eventRepository.findById(request.getEventId())

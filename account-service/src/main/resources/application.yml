@@ -13,3 +13,13 @@ spring:
   sql:
     init:
       mode: always
+
+management:
+  endpoints:
+    web:
+      base-path: /
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: always
